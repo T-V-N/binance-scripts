@@ -1,10 +1,11 @@
 import * as csv from "@fast-csv/format";
+import _ from "lodash";
 import fs from "fs";
 import { publicRequest, privateRequest } from "./binanceApi";
 import ConsoleProgressBar from "console-progress-bar";
 
 const historyStream = csv.format({
-  delimiter: "\t",
+  delimiter: ";",
   headers: [
     "symbol",
     "id",
@@ -23,13 +24,13 @@ const historyStream = csv.format({
 });
 
 export default async () => {
-  const symbolsResponse = await publicRequest(
-    {},
-    "/api/v3/exchangeInfo",
-    "GET"
-  );
-
-  const symbols = symbolsResponse.data.symbols.map((s) => s.symbol);
+  // const symbolsResponse = await publicRequest(
+  //   {},
+  //   "/api/v3/exchangeInfo",
+  //   "GET"
+  // );
+  // const symbols = symbolsResponse.data.symbols.map((s) => s.symbol); для спота
+  const symbols = process.env.MARKETS.split(", ");
   console.log(`${symbols.length} markets detected`);
 
   const bar = new ConsoleProgressBar({ maxValue: symbols.length });
@@ -42,14 +43,22 @@ export default async () => {
     const data = {
       timestamp: Date.now(),
       symbol,
+      limit: 1000,
     };
 
     const tradesResponse = await privateRequest(
       data,
-      "/api/v3/myTrades",
+      // "/api/v3/myTrades", для спота
+      "/fapi/v1/userTrades",
       "GET"
     );
-    const trades = tradesResponse.data;
+
+    const response = tradesResponse.data;
+    const trades = _.sortBy(response, "time").map((trade) => ({
+      ...trade,
+      price: trade.price.replace(".", ","),
+      qty: trade.qty.replace(".", ","),
+    }));
     for (const trade of trades) {
       historyStream.write([...Object.values(trade)]);
     }

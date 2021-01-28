@@ -25,7 +25,6 @@ const privateRequest = async (data, endPoint, type) => {
       "X-MBX-APIKEY": process.env.API_KEY,
     },
   };
-
   try {
     const response = await axios(requestConfig);
     return response;
