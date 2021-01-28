@@ -22,6 +22,7 @@ const historyStream = csv.format({
     "positionSide",
     "maker",
     "buyer",
+    "ISOTime",
   ],
 });
 
@@ -62,7 +63,10 @@ export default async () => {
       qty: trade.qty.replace(".", ","),
     }));
     for (const trade of trades) {
-      historyStream.write([...Object.values(trade)]);
+      historyStream.write([
+        ...Object.values(trade),
+        new Date(trade.time).toISOString(),
+      ]);
     }
     bar.addValue(1);
   }
