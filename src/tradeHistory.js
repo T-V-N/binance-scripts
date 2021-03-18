@@ -46,7 +46,6 @@ export default async () => {
     const data = {
       timestamp: Date.now(),
       symbol,
-      limit: 1000,
     };
 
     const tradesResponse = await privateRequest(

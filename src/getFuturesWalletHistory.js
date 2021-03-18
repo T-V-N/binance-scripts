@@ -4,7 +4,7 @@ import { publicRequest, privateRequest } from "./binanceApi";
 import ConsoleProgressBar from "console-progress-bar";
 
 const historyStream = csv.format({
-  delimiter: ",",
+  delimiter: ";",
   headers: [
     "symbol",
     "incomeType",
@@ -19,19 +19,19 @@ const historyStream = csv.format({
 });
 
 export default async () => {
-  const years = 2;
-  const bar = new ConsoleProgressBar({ maxValue: years });
+  const months = 20;
+  const bar = new ConsoleProgressBar({ maxValue: months });
   bar.startChars = "Fetching wallet history:";
 
   const outputFile = fs.createWriteStream("./output/walletHistory.csv");
   historyStream.pipe(outputFile);
 
   const now = Date.now();
-  for (let i = 0; i < years; i++) {
+  for (let i = months - 1; i >= 0; i--) {
     const data = {
       timestamp: Date.now(),
-      startTime: now - 31556952000 * (i + 1),
-      endTime: now - 31556952000 * i,
+      startTime: now - (7776000000 / 3) * (i + 1),
+      endTime: now - (7776000000 / 3) * i,
       limit: 1000,
     };
     try {
@@ -39,6 +39,7 @@ export default async () => {
         await privateRequest(data, "/fapi/v1/income", "GET")
       ).data;
       for (const walletEntry of walletEntries) {
+        walletEntry.income = walletEntry.income.replace(".", ",");
         historyStream.write([
           ...Object.values(walletEntry),
           new Date(walletEntry.time).toISOString(),
